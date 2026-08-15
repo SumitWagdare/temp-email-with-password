@@ -1,0 +1,119 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root {
+  /* Default Cyan Swatch */
+  --accent-rgb: 6 182 212;
+  --accent-glow-rgb: 34 211 238;
+  --accent-light-rgb: 165 243 252;
+  
+  --bg-primary: 255 255 255;
+  --bg-secondary: 248 250 252;
+  --card-bg: 255 255 255 / 0.8;
+  --card-border: 226 232 240 / 0.8;
+  --text-main: 15 23 42;
+  --text-muted: 100 116 139;
+}
+
+.dark {
+  --bg-primary: 9 13 24;
+  --bg-secondary: 15 23 42;
+  --card-bg: 17 24 39 / 0.65;
+  --card-border: 55 65 81 / 0.4;
+  --text-main: 243 244 246;
+  --text-muted: 156 163 175;
+}
+
+/* Accent Presets */
+[data-accent="cyan"] {
+  --accent-rgb: 6 182 212;
+  --accent-glow-rgb: 34 211 238;
+  --accent-light-rgb: 165 243 252;
+}
+
+[data-accent="emerald"] {
+  --accent-rgb: 16 185 129;
+  --accent-glow-rgb: 52 211 153;
+  --accent-light-rgb: 167 243 208;
+}
+
+[data-accent="violet"] {
+  --accent-rgb: 139 92 246;
+  --accent-glow-rgb: 167 139 250;
+  --accent-light-rgb: 221 214 254;
+}
+
+[data-accent="amber"] {
+  --accent-rgb: 245 158 11;
+  --accent-glow-rgb: 251 191 36;
+  --accent-light-rgb: 253 230 138;
+}
+
+[data-accent="rose"] {
+  --accent-rgb: 244 63 94;
+  --accent-glow-rgb: 251 113 133;
+  --accent-light-rgb: 254 205 211;
+}
+
+body {
+  color: rgb(var(--text-main));
+  background-color: rgb(var(--bg-primary));
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Custom Glassmorphism Utility */
+.glass-panel {
+  background: rgba(var(--card-bg));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(var(--card-border));
+}
+
+.glass-card {
+  background: rgba(var(--card-bg));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--card-border));
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(var(--accent-rgb), 0.4);
+  box-shadow: 0 8px 32px -4px rgba(var(--accent-rgb), 0.15);
+}
+
+/* Background Gradients */
+.bg-mesh-dark {
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(var(--accent-rgb), 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.12) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
+}
+
+.bg-mesh-light {
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(var(--accent-rgb), 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.06) 0px, transparent 50%);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-rgb), 0.6);
+}
