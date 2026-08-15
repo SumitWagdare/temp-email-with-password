@@ -1,20 +1,20 @@
-# NoTrace — Privacy-First Disposable Temp Mail & Secure Password Generator
+# NoTrace — Privacy-First Temp Email With Password & Secure Generator
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/SumitWagdare/notrace)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/SumitWagdare/temp-email-with-password)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-14_App_Router-black)
 
-**NoTrace** is a free, open-source, privacy-first web application providing disposable temporary email inboxes and cryptographically strong password generation. Built with zero backend databases or server logs, all credentials and messages exist exclusively in browser RAM and `sessionStorage`.
+**NoTrace** is a free, open-source, privacy-first web application providing disposable temporary email inboxes with account passwords and cryptographically strong password generation. Built with zero backend databases or server logs, all credentials and messages exist exclusively in browser RAM and `sessionStorage`.
 
 ---
 
 ## 🌟 Key Features
 
-### 📬 Disposable Temp Email
+### 📬 Disposable Temp Email With Password
 - **Keyless Public Provider Integration**: Built on `mail.tm` REST API with automatic fallback to `1secmail`.
 - **Server API Proxy**: All requests route server-side through `/api/mailtm` to eliminate browser CORS blocks and adblocker issues.
-- **Stacked Account Credentials**: Displays both Email Address and Account Password together with copy triggers and eye-reveal toggles.
+- **Stacked Account Credentials**: Displays both Email Address and Account Password together in one panel with copy triggers and eye-reveal toggles.
 - **Session-Only Persistence**: Credentials stored in `sessionStorage`. Closing the tab or clicking Destroy wipes all data instantly.
 - **Auto-Polling with Tab Visibility Control**: Background polling every 12 seconds that automatically pauses when the browser tab is hidden to save resources and rate-limits.
 - **QR Code Modal**: Scan your temporary email address directly onto your smartphone using `qrcode.react`.
@@ -53,8 +53,8 @@
 
 1. **Clone repository**:
    ```bash
-   git clone https://github.com/SumitWagdare/notrace.git
-   cd notrace
+   git clone https://github.com/SumitWagdare/temp-email-with-password.git
+   cd temp-email-with-password
    ```
 
 2. **Install dependencies**:
@@ -108,7 +108,7 @@ To add a new email provider (e.g. `GuerrillaMail` or `CustomProvider`):
 ## ⚡ Deployment
 
 ### Vercel (Recommended)
-This repository includes a pre-configured `vercel.json` file. Simply import `SumitWagdare/notrace` into your Vercel dashboard or click the badge above.
+This repository includes a pre-configured `vercel.json` file. Simply import `SumitWagdare/temp-email-with-password` into your Vercel dashboard or click the badge above.
 Zero environment variables or manual dashboard setup required!
 
 ---
