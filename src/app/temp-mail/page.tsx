@@ -59,6 +59,8 @@ export default function TempMailPage() {
   const [account, setAccount] = useState<InboxAccount | null>(null);
   const [domains, setDomains] = useState<string[]>([]);
   const [initializing, setInitializing] = useState<boolean>(true);
+  const [initError, setInitError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
 
   // Copy feedback state
   const [copiedAddress, setCopiedAddress] = useState(false);
@@ -81,6 +83,7 @@ export default function TempMailPage() {
   // 1. Initialize or restore session inbox
   const initInbox = useCallback(async () => {
     setInitializing(true);
+    setInitError(null);
     try {
       const availDomains = await emailService.getDomains();
       setDomains(availDomains);
@@ -104,7 +107,10 @@ export default function TempMailPage() {
       setAccount(newAcc);
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(newAcc));
     } catch (err: any) {
-      toast.error(err.message || 'Failed to initialize disposable inbox');
+      const msg = err.message || 'Failed to initialize disposable inbox';
+      console.error('[TempMail] initInbox failed:', msg);
+      setInitError(msg);
+      toast.error(msg);
     } finally {
       setInitializing(false);
     }
@@ -238,6 +244,38 @@ export default function TempMailPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+      {/* Error State Panel */}
+      {initError && !account && (
+        <div className="glass-panel rounded-3xl p-8 border border-rose-500/30 bg-rose-500/5 space-y-5 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-rose-400" />
+            </div>
+            <div className="space-y-2 max-w-lg">
+              <h2 className="text-lg font-bold text-rose-200">Inbox Creation Failed</h2>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Could not connect to the email provider. This is usually a temporary issue with the upstream service.
+              </p>
+              <div className="mt-2 p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-left">
+                <p className="text-xs font-mono text-rose-300 break-all">{initError}</p>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                setRetrying(true);
+                await initInbox();
+                setRetrying(false);
+              }}
+              disabled={retrying}
+              className="mt-2 py-3 px-8 rounded-xl bg-accent text-slate-950 font-bold hover:bg-accent-glow transition-all flex items-center gap-2 text-sm disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} />
+              <span>{retrying ? 'Retrying...' : 'Retry Connection'}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top Banner Notice */}
       <div className="p-3.5 rounded-2xl glass-card border border-amber-500/30 bg-amber-500/5 flex items-center justify-between gap-3 text-xs text-amber-300">
         <div className="flex items-center gap-2.5">

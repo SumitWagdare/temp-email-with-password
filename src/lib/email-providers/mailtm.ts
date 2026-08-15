@@ -6,6 +6,8 @@ import {
   EmailAttachment,
 } from './types';
 
+const FETCH_TIMEOUT_MS = 15_000; // 15 seconds
+
 function getUrl(path: string): string {
   if (typeof window !== 'undefined') {
     return `/api/mailtm?endpoint=${encodeURIComponent(path)}`;
@@ -14,12 +16,28 @@ function getUrl(path: string): string {
   return `${base}${path}`;
 }
 
+/**
+ * Fetch wrapper with AbortController timeout.
+ */
+async function fetchWithTimeout(
+  url: string,
+  init?: RequestInit
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export class MailTmProvider implements EmailProvider {
   name = 'mail.tm';
 
   async getDomains(): Promise<string[]> {
     const url = getUrl('/domains');
-    const res = await fetch(url, {
+    const res = await fetchWithTimeout(url, {
       headers: { Accept: 'application/json' },
     });
     if (!res.ok) {
@@ -46,7 +64,7 @@ export class MailTmProvider implements EmailProvider {
     console.log(`[MailTmProvider] Creating account for ${address}...`);
 
     // 1. Create account
-    const createRes = await fetch(getUrl('/accounts'), {
+    const createRes = await fetchWithTimeout(getUrl('/accounts'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -65,7 +83,7 @@ export class MailTmProvider implements EmailProvider {
     const accountId = createData?.id || address;
 
     // 2. Get JWT Token
-    const tokenRes = await fetch(getUrl('/token'), {
+    const tokenRes = await fetchWithTimeout(getUrl('/token'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -98,7 +116,7 @@ export class MailTmProvider implements EmailProvider {
       throw new Error('Mail.tm requires JWT token to fetch messages');
     }
 
-    const res = await fetch(getUrl('/messages'), {
+    const res = await fetchWithTimeout(getUrl('/messages'), {
       headers: {
         Authorization: `Bearer ${account.token}`,
         Accept: 'application/json',
@@ -139,7 +157,7 @@ export class MailTmProvider implements EmailProvider {
       throw new Error('Mail.tm requires JWT token for message detail');
     }
 
-    const res = await fetch(getUrl(`/messages/${messageId}`), {
+    const res = await fetchWithTimeout(getUrl(`/messages/${messageId}`), {
       headers: {
         Authorization: `Bearer ${account.token}`,
         Accept: 'application/json',
@@ -199,7 +217,7 @@ export class MailTmProvider implements EmailProvider {
     if (!account.token || !account.id) return true;
 
     try {
-      const res = await fetch(getUrl(`/accounts/${account.id}`), {
+      const res = await fetchWithTimeout(getUrl(`/accounts/${account.id}`), {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${account.token}`,
