@@ -35,10 +35,20 @@ export class EmailProviderService implements EmailProvider {
 
   async getDomains(): Promise<string[]> {
     try {
-      return await this.primary.getDomains();
-    } catch {
-      return await this.fallback.getDomains();
+      const domains = await this.primary.getDomains();
+      if (domains && domains.length > 0) return domains;
+    } catch (primaryErr) {
+      console.warn('Failed to fetch domains from primary provider:', primaryErr);
     }
+
+    try {
+      const fallbackDomains = await this.fallback.getDomains();
+      if (fallbackDomains && fallbackDomains.length > 0) return fallbackDomains;
+    } catch (fallbackErr) {
+      console.warn('Failed to fetch domains from fallback provider:', fallbackErr);
+    }
+
+    return ['emalupe.com', 'mail.tm', 'oakon.com'];
   }
 
   async createAccount(

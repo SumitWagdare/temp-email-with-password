@@ -43,6 +43,8 @@ async function handleProxy(req: NextRequest): Promise<NextResponse> {
     // --- Build upstream headers ---
     const upstreamHeaders: Record<string, string> = {
       Accept: 'application/json',
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 NoTrace/1.0',
     };
 
     const authHeader = req.headers.get('authorization');
@@ -61,25 +63,48 @@ async function handleProxy(req: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // --- Proxy the request ---
-    let upstreamRes: Response;
-    try {
-      upstreamRes = await fetchWithTimeout(
-        targetUrl,
-        {
-          method: req.method,
-          headers: upstreamHeaders,
-          body: body || undefined,
-        },
-        UPSTREAM_TIMEOUT_MS
-      );
-    } catch (fetchErr: any) {
-      const message =
-        fetchErr.name === 'AbortError'
-          ? `Upstream request to mail.tm timed out after ${UPSTREAM_TIMEOUT_MS}ms`
-          : `Upstream fetch failed: ${fetchErr.message || String(fetchErr)}`;
+    // --- Proxy the request with fallback to mail.gw if primary fails ---
+    let upstreamRes: Response | null = null;
+    const upstreamBases = [
+      MAILTM_BASE,
+      'https://api.mail.gw',
+    ].filter((v, i, a) => a.indexOf(v) === i);
 
-      console.error(`[mailtm-proxy] Fetch error:`, message);
+    let lastError: any = null;
+
+    for (const base of upstreamBases) {
+      const currentUrl = `${base}${endpoint}`;
+      try {
+        const res = await fetchWithTimeout(
+          currentUrl,
+          {
+            method: req.method,
+            headers: upstreamHeaders,
+            body: body || undefined,
+          },
+          UPSTREAM_TIMEOUT_MS
+        );
+
+        if (res.status >= 500 && base !== upstreamBases[upstreamBases.length - 1]) {
+          console.warn(`[mailtm-proxy] Upstream ${base} returned ${res.status}, trying fallback...`);
+          continue;
+        }
+
+        upstreamRes = res;
+        break;
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`[mailtm-proxy] Upstream fetch to ${base} failed:`, err.message);
+      }
+    }
+
+    if (!upstreamRes) {
+      const message =
+        lastError?.name === 'AbortError'
+          ? `Upstream request timed out after ${UPSTREAM_TIMEOUT_MS}ms`
+          : `Upstream fetch failed: ${lastError?.message || String(lastError)}`;
+
+      console.error(`[mailtm-proxy] All upstreams failed:`, message);
 
       return NextResponse.json(
         { error: 'upstream_fetch_failed', message },
