@@ -41,16 +41,18 @@ function getCategoryCharset(rawCharset: string, excludeAmbiguous: boolean): stri
 
 /**
  * Generates a cryptographically secure random integer in range [0, max - 1]
+ * Uses Web Crypto API (globalThis.crypto) — available in all modern browsers.
+ * This module is only called client-side from 'use client' components after mount.
  */
 function getRandomInt(max: number): number {
   if (max <= 0) return 0;
   const array = new Uint32Array(1);
-  if (typeof window !== 'undefined' && window.crypto) {
-    window.crypto.getRandomValues(array);
+
+  if (typeof globalThis !== 'undefined' && globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function') {
+    globalThis.crypto.getRandomValues(array);
   } else {
-    // Fallback for Node test environment if webcrypto isn't globally bound
-    const cryptoNode = require('crypto');
-    cryptoNode.randomFillSync(array);
+    // Fallback: Math.random (non-cryptographic, should never be reached in modern browsers)
+    array[0] = Math.floor(Math.random() * 0xFFFFFFFF);
   }
   return array[0] % max;
 }

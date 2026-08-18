@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   KeyRound,
@@ -32,6 +32,19 @@ export default function PasswordGeneratorPage() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedPrimary, setCopiedPrimary] = useState(false);
   const [activeTab, setActiveTab] = useState<'single' | 'batch'>('single');
+  const [isMounted, setIsMounted] = useState(false);
+  const clipboardTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Mark component as mounted (client-side only) to avoid SSR hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+    return () => {
+      // Cleanup clipboard timer on unmount
+      if (clipboardTimerRef.current) {
+        clearInterval(clipboardTimerRef.current);
+      }
+    };
+  }, []);
 
   // Regenerate primary & batch passwords
   const handleRegenerate = useCallback(() => {
@@ -42,9 +55,12 @@ export default function PasswordGeneratorPage() {
     setCopiedIndex(null);
   }, [options]);
 
+  // Generate passwords only after client-side mount to prevent hydration mismatch
   useEffect(() => {
-    handleRegenerate();
-  }, [handleRegenerate]);
+    if (isMounted) {
+      handleRegenerate();
+    }
+  }, [isMounted, handleRegenerate]);
 
   // Handle Copy to Clipboard with 30s auto-clear countdown toast
   const copyToClipboard = (text: string, isPrimary = true, index?: number) => {
@@ -58,13 +74,22 @@ export default function PasswordGeneratorPage() {
       setTimeout(() => setCopiedIndex(null), 2000);
     }
 
+    // Clear any existing clipboard countdown timer
+    if (clipboardTimerRef.current) {
+      clearInterval(clipboardTimerRef.current);
+      clipboardTimerRef.current = null;
+    }
+
     // Auto-clear clipboard countdown toast
     let remaining = 30;
-    const toastId = toast.custom(
-      (t) => (
+    const toastId = 'clipboard-countdown';
+
+    // Show the initial toast
+    toast.custom(
+      () => (
         <div className="flex items-center gap-3 bg-slate-900 border border-slate-700/80 p-3.5 rounded-xl shadow-2xl backdrop-blur-md text-slate-100 text-sm">
           <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent">
-            <Clock className="w-4 h-4 animate-spin" />
+            <Clock className="w-4 h-4 animate-pulse" />
           </div>
           <div>
             <p className="font-semibold text-slate-100">Password Copied to Clipboard!</p>
@@ -74,23 +99,27 @@ export default function PasswordGeneratorPage() {
           </div>
         </div>
       ),
-      { duration: 30000 }
+      { id: toastId, duration: 31000 }
     );
 
-    const interval = setInterval(() => {
+    clipboardTimerRef.current = setInterval(() => {
       remaining -= 1;
       if (remaining <= 0) {
-        clearInterval(interval);
+        if (clipboardTimerRef.current) {
+          clearInterval(clipboardTimerRef.current);
+          clipboardTimerRef.current = null;
+        }
         // Clear clipboard
         navigator.clipboard.writeText('');
         toast.dismiss(toastId);
         toast.info('Clipboard auto-cleared for security.', { duration: 3000 });
       } else {
+        // Update the SAME toast in place using its stable ID
         toast.custom(
-          (t) => (
+          () => (
             <div className="flex items-center gap-3 bg-slate-900 border border-slate-700/80 p-3.5 rounded-xl shadow-2xl backdrop-blur-md text-slate-100 text-sm">
               <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent">
-                <Clock className="w-4 h-4 animate-pulse text-accent" />
+                <Clock className="w-4 h-4 animate-pulse" />
               </div>
               <div>
                 <p className="font-semibold text-slate-100">Password Copied to Clipboard!</p>
@@ -100,7 +129,7 @@ export default function PasswordGeneratorPage() {
               </div>
             </div>
           ),
-          { id: toastId, duration: remaining * 1000 }
+          { id: toastId, duration: (remaining + 1) * 1000 }
         );
       }
     }, 1000);
