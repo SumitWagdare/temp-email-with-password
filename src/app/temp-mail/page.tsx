@@ -27,6 +27,8 @@ import {
   KeyRound,
   Lock,
   AlertCircle,
+  SlidersHorizontal,
+  Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { emailService } from '@/lib/email-providers';
@@ -34,7 +36,7 @@ import { InboxAccount, EmailMessage, EmailDetail } from '@/lib/email-providers/t
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { QrModal } from '@/components/QrModal';
 import { ChangeAddressModal } from '@/components/ChangeAddressModal';
-import { generatePassword, DEFAULT_OPTIONS } from '@/lib/password-generator';
+import { generatePassword, DEFAULT_OPTIONS, PasswordOptions, calculateEntropy, getStrengthInfo } from '@/lib/password-generator';
 
 const SESSION_KEY = 'notrace-inbox-session';
 
@@ -76,6 +78,7 @@ export default function TempMailPage() {
   // Modals state
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [isChangeOpen, setIsChangeOpen] = useState(false);
+  const [options, setOptions] = useState<PasswordOptions>(DEFAULT_OPTIONS);
 
   // Messages UI state
   const [searchQuery, setSearchQuery] = useState('');
@@ -164,12 +167,26 @@ export default function TempMailPage() {
   // Attempt Refresh Password (generate a new one locally)
   const handlePasswordRefreshClick = () => {
     if (!account) return;
-    const newPassword = generatePassword(DEFAULT_OPTIONS);
+    const newPassword = generatePassword(options);
     const updatedAccount = { ...account, password: newPassword };
     setAccount(updatedAccount);
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(updatedAccount));
     toast.success('Generated a new secure password!', { duration: 2000 });
   };
+
+  const toggleOption = (key: keyof PasswordOptions) => {
+    if (typeof options[key] === 'boolean' && options[key] === true && key !== 'excludeAmbiguous') {
+      const activeCount = [options.uppercase, options.lowercase, options.numbers, options.symbols].filter(Boolean).length;
+      if (activeCount <= 1) {
+        toast.warning('At least one character set must remain enabled');
+        return;
+      }
+    }
+    setOptions((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const entropy = account?.password ? calculateEntropy(account.password, options) : 0;
+  const strength = getStrengthInfo(entropy);
 
   // Handle Manual Refresh Inbox
   const handleManualRefresh = () => {
@@ -398,6 +415,87 @@ export default function TempMailPage() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Integrated Password Generator Settings */}
+        <div className="pt-5 border-t border-slate-800/80 space-y-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-slate-300">
+              <SlidersHorizontal className="w-4 h-4 text-accent" />
+              <h3 className="font-semibold text-sm">Generator Settings</h3>
+            </div>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${strength.badgeBg}`}>
+              {strength.label} ({strength.bits} bits)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Left: Toggles */}
+            <div className="space-y-2">
+              {[
+                { key: 'uppercase', label: 'Uppercase (A-Z)' },
+                { key: 'lowercase', label: 'Lowercase (a-z)' },
+                { key: 'numbers', label: 'Numbers (0-9)' },
+                { key: 'symbols', label: 'Symbols (!@#$)' },
+              ].map((item) => {
+                const isChecked = options[item.key as keyof PasswordOptions] as boolean;
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => toggleOption(item.key as keyof PasswordOptions)}
+                    className={`w-full flex items-center gap-3 p-2 rounded-lg border transition-all ${
+                      isChecked
+                        ? 'bg-slate-800 border-accent/40 text-slate-200'
+                        : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded-sm flex items-center justify-center border transition-colors ${isChecked ? 'bg-accent border-accent text-slate-950' : 'border-slate-700 bg-slate-800/50'}`}>
+                      {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                    </div>
+                    <span className="text-xs font-medium">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Right: Slider & Strength */}
+            <div className="space-y-4">
+              <div className="space-y-2 p-3 rounded-xl bg-slate-900/50 border border-slate-800">
+                <div className="flex justify-between items-center text-xs">
+                  <label className="font-medium text-slate-300">Length</label>
+                  <span className="font-mono font-bold text-accent px-1.5 py-0.5 rounded bg-accent/10 border border-accent/20">
+                    {options.length}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="8"
+                  max="64"
+                  value={options.length}
+                  onChange={(e) => setOptions((prev) => ({ ...prev, length: parseInt(e.target.value) }))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-accent"
+                />
+                <div className="flex justify-between text-[9px] text-slate-500 px-0.5 font-medium uppercase tracking-wider">
+                  <span>8</span>
+                  <span>16</span>
+                  <span>32</span>
+                  <span>64</span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 pt-1">
+                <div className="flex justify-between items-center text-[10px]">
+                  <span className="text-slate-400 font-medium uppercase tracking-wider">Entropy Score</span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${strength.colorClass.split(' ')[0]}`}
+                    style={{ width: `${strength.score}%` }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

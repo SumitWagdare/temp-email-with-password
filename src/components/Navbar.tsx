@@ -13,8 +13,7 @@ export function Navbar() {
 
   const navItems = [
     { href: '/', label: 'Overview', icon: Sparkles },
-    { href: '/temp-mail', label: 'Temp Mail', icon: Mail },
-    { href: '/password-generator', label: 'Password Generator', icon: KeyRound },
+    { href: '/temp-mail', label: 'Dashboard', icon: Mail },
   ];
 
   return (
