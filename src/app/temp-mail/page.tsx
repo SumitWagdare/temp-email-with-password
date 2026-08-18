@@ -101,6 +101,11 @@ export default function TempMailPage() {
       if (savedSession) {
         try {
           const parsed = JSON.parse(savedSession) as InboxAccount;
+          // Gracefully upgrade old sessions that didn't have passwords (e.g. old 1secmail sessions)
+          if (!parsed.password) {
+            parsed.password = generatePassword(DEFAULT_OPTIONS);
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify(parsed));
+          }
           setAccount(parsed);
           setInitializing(false);
           return;
