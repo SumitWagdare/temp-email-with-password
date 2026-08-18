@@ -34,6 +34,7 @@ import { InboxAccount, EmailMessage, EmailDetail } from '@/lib/email-providers/t
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { QrModal } from '@/components/QrModal';
 import { ChangeAddressModal } from '@/components/ChangeAddressModal';
+import { generatePassword, DEFAULT_OPTIONS } from '@/lib/password-generator';
 
 const SESSION_KEY = 'notrace-inbox-session';
 
@@ -160,12 +161,14 @@ export default function TempMailPage() {
     setTimeout(() => setCopiedPassword(false), 2000);
   };
 
-  // Attempt Refresh Password (provider limitation notification)
+  // Attempt Refresh Password (generate a new one locally)
   const handlePasswordRefreshClick = () => {
-    toast.warning(
-      'Provider limitation: mail.tm passwords cannot be rotated in-place after account creation.',
-      { duration: 4000 }
-    );
+    if (!account) return;
+    const newPassword = generatePassword(DEFAULT_OPTIONS);
+    const updatedAccount = { ...account, password: newPassword };
+    setAccount(updatedAccount);
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(updatedAccount));
+    toast.success('Generated a new secure password!', { duration: 2000 });
   };
 
   // Handle Manual Refresh Inbox
@@ -387,9 +390,9 @@ export default function TempMailPage() {
 
                 <button
                   onClick={handlePasswordRefreshClick}
-                  className="p-2 rounded-lg bg-slate-900 text-slate-400 opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-not-allowed"
-                  title="Provider limitation: mail.tm passwords cannot be rotated in-place"
-                  aria-label="Refresh Password (Provider limitation)"
+                  className="p-2 rounded-lg bg-slate-900 text-slate-400 hover:text-accent hover:bg-slate-800 transition-colors shrink-0"
+                  title="Generate New Password"
+                  aria-label="Generate New Password"
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
