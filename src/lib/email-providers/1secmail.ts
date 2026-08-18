@@ -26,10 +26,12 @@ export class OneSecMailProvider implements EmailProvider {
 
   async createAccount(username: string, domain: string): Promise<InboxAccount> {
     const address = `${username.toLowerCase()}@${domain}`;
+    const password = `NoTrace_${Math.random().toString(36).slice(2, 10)}!`;
     return {
       id: username,
       address,
       token: null,
+      password,
       providerName: this.name,
       createdAt: new Date().toISOString(),
     };
