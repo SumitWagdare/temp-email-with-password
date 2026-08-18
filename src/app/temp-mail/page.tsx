@@ -54,6 +54,11 @@ function formatTimeAgo(dateString: string): string {
 
 export default function TempMailPage() {
   const isVisible = usePageVisibility();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Session Account state
   const [account, setAccount] = useState<InboxAccount | null>(null);
@@ -357,10 +362,23 @@ export default function TempMailPage() {
 
             {initializing || !account ? (
               <div className="h-12 w-full bg-slate-900 animate-pulse rounded-xl" />
+            ) : !account.password ? (
+              <div className="flex items-center gap-2 bg-slate-950/80 p-2.5 sm:p-3 rounded-xl border border-slate-800">
+                <span className="flex-1 font-mono text-sm sm:text-base font-medium text-slate-400 truncate px-1">
+                  No password required for this provider
+                </span>
+                <button
+                  className="py-2 px-3.5 rounded-lg bg-slate-800/50 text-slate-500 border border-slate-700/30 font-bold transition-all flex items-center gap-1.5 text-xs shrink-0 cursor-not-allowed"
+                  disabled
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy</span>
+                </button>
+              </div>
             ) : (
               <div className="flex items-center gap-2 bg-slate-950/80 p-2.5 sm:p-3 rounded-xl border border-slate-800">
                 <span className="flex-1 font-mono text-sm sm:text-base font-bold tracking-wider text-slate-200 truncate select-all px-1">
-                  {showPassword ? account.password || '••••••••••••' : '••••••••••••••••'}
+                  {showPassword ? account.password : '••••••••••••••••'}
                 </span>
 
                 <button

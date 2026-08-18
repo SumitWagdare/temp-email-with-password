@@ -327,15 +327,16 @@ export default function PasswordGeneratorPage() {
             </button>
           </div>
 
-          <AnimatePresence mode="wait">
-            {activeTab === 'single' ? (
-              <motion.div
-                key="single"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
-              >
+          {isMounted && (
+            <AnimatePresence mode="wait">
+              {activeTab === 'single' ? (
+                <motion.div
+                  key="single"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-6"
+                >
                 {/* Main Password Output Box */}
                 <div className="glass-panel rounded-2xl p-6 space-y-6 relative overflow-hidden">
                   <div className="flex items-center justify-between">
@@ -469,6 +470,7 @@ export default function PasswordGeneratorPage() {
               </motion.div>
             )}
           </AnimatePresence>
+          )}
         </div>
       </div>
     </div>
