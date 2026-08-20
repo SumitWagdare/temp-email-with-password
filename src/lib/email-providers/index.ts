@@ -56,9 +56,23 @@ export class EmailProviderService implements EmailProvider {
     domain: string,
     password?: string
   ): Promise<InboxAccount> {
-    return this.executeWithFallback((provider) =>
-      provider.createAccount(username, domain, password)
-    );
+    try {
+      return await this.primary.createAccount(username, domain, password);
+    } catch (primaryErr) {
+      console.warn(
+        `Primary provider ${this.primary.name} failed to create account. Falling back to ${this.fallback.name}...`,
+        primaryErr
+      );
+      // We must use a valid domain for the fallback provider, not the one from the primary provider
+      let fallbackDomains: string[] = [];
+      try {
+        fallbackDomains = await this.fallback.getDomains();
+      } catch (e) {
+        fallbackDomains = ['1secmail.com'];
+      }
+      const fallbackDomain = fallbackDomains.length > 0 ? fallbackDomains[0] : '1secmail.com';
+      return await this.fallback.createAccount(username, fallbackDomain, password);
+    }
   }
 
   async getMessages(account: InboxAccount): Promise<EmailMessage[]> {

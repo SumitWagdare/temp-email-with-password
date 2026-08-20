@@ -57,11 +57,6 @@ function formatTimeAgo(dateString: string): string {
 
 export default function TempMailPage() {
   const isVisible = usePageVisibility();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Session Account state
   const [account, setAccount] = useState<InboxAccount | null>(null);
@@ -189,6 +184,16 @@ export default function TempMailPage() {
     }
     setOptions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  // Auto-regenerate password when generator options change so entropy display stays accurate
+  useEffect(() => {
+    if (!account) return;
+    const newPassword = generatePassword(options);
+    const updatedAccount = { ...account, password: newPassword };
+    setAccount(updatedAccount);
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(updatedAccount));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options.length, options.uppercase, options.lowercase, options.numbers, options.symbols, options.excludeAmbiguous]);
 
   const entropy = account?.password ? calculateEntropy(account.password, options) : 0;
   const strength = getStrengthInfo(entropy);
