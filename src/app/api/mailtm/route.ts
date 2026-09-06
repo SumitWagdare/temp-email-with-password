@@ -5,6 +5,8 @@ export const runtime = 'nodejs';
 
 // Allow up to 30s for the function (Vercel hobby default is 10s, pro is 60s)
 export const maxDuration = 30;
+export const fetchCache = 'force-no-store';
+export const dynamic = 'force-dynamic';
 
 const MAILTM_BASE =
   process.env.NEXT_PUBLIC_MAILTM_API_URL || 'https://api.mail.tm';

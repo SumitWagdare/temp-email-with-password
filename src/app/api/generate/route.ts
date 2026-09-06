@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
+export const fetchCache = 'force-no-store';
+export const dynamic = 'force-dynamic';
 
 const MAILTM_BASE = process.env.NEXT_PUBLIC_MAILTM_API_URL || 'https://api.mail.tm';
 const TIMEOUT_MS = 12_000;
